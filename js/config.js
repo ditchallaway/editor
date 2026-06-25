@@ -32,7 +32,8 @@ export const CONFIG = Object.freeze({
  */
 export function imageUrl(customerId, orderId, direction) {
   const ts = Date.now();
-  return `${CONFIG.R2_BASE}/${customerId}/${orderId}/property_${direction}.png?t=${ts}`;
+  const folderOrderId = orderId.startsWith('order_') ? orderId : 'order_' + orderId;
+  return `${CONFIG.R2_BASE}/${customerId}/${folderOrderId}/property_${direction}.png?t=${ts}`;
 }
 
 /**
@@ -43,9 +44,10 @@ export function imageUrl(customerId, orderId, direction) {
  * @returns {string} — hash string including the leading #
  */
 export function buildServerHash(customerId, orderId) {
+  const folderOrderId = orderId.startsWith('order_') ? orderId : 'order_' + orderId;
   const serverConfig = {
     server: {
-      url: `${CONFIG.WEBHOOK_BUCKET}?customer_id=${encodeURIComponent(customerId)}&order_id=${encodeURIComponent(orderId)}`,
+      url: `${CONFIG.WEBHOOK_BUCKET}?customer_id=${encodeURIComponent(customerId)}&order_id=${encodeURIComponent(folderOrderId)}`,
       formats: ['png'],
     },
   };

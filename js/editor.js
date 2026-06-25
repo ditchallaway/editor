@@ -132,6 +132,7 @@ async function init() {
     setStatus('loading', 'Loading images…');
 
     // Load images sequentially via postMessage
+    let loadedCount = 0;
     for (let i = 0; i < imageUrls.length; i++) {
       const dir = directions[i];
       const url = imageUrls[i];
@@ -148,6 +149,7 @@ async function init() {
 
         await bridge.loadFile(buffer);
         updateImageStatus(dir, 'loaded', '✓');
+        loadedCount++;
       } catch (err) {
         console.error(`[Editor] Failed to load ${dir}:`, err);
         updateImageStatus(dir, 'error', '✗');
@@ -158,10 +160,10 @@ async function init() {
     updateProgress(imageUrls.length, imageUrls.length);
 
     // Run acreage script if acreage is provided
-    if (state.acreage) {
+    if (state.acreage && loadedCount > 0) {
       setLoading('Adding acreage text…', `${state.acreage} ACRES`);
       try {
-        await bridge.runScript(acreageScript(state.acreage, directions.length));
+        await bridge.runScript(acreageScript(state.acreage, loadedCount));
       } catch (err) {
         console.error('[Editor] Acreage script failed:', err);
       }
