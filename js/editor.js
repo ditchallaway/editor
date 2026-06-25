@@ -189,6 +189,11 @@ async function init() {
     // Enable save button
     saveBtn.disabled = false;
 
+    // Enable fulfill button if we have an ID
+    if (state.fulfillmentId) {
+      fulfillBtn.disabled = false;
+    }
+
     // ── Wire up Save Button ────────────────────────────────
     saveBtn.addEventListener('click', async () => {
       saveBtn.disabled = true;
