@@ -37,8 +37,9 @@ export function imageUrl(customerId, orderId, direction) {
 }
 
 /**
- * Build the Photopea server config for the save callback.
- * Encodes as a URI-safe hash fragment for the iframe src.
+ * Build the Photopea server config hash for the iframe src.
+ * Configures the server callback for saving. Files are loaded separately
+ * via app.open() after Photopea initializes (avoids ambiguous "done" counting).
  * @param {string} customerId
  * @param {string} orderId
  * @returns {string} — hash string including the leading #

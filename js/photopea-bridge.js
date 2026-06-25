@@ -11,7 +11,7 @@
  * Usage:
  *   const bridge = new PhotopeaBridge(document.getElementById('pp'));
  *   await bridge.waitForReady();
- *   await bridge.loadFile(pngArrayBuffer);
+ *   await bridge.runScript('app.open("https://example.com/img.png");');
  *   await bridge.runScript('app.activeDocument.rotateCanvas(90);');
  */
 export class PhotopeaBridge {

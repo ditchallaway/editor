@@ -1,8 +1,9 @@
 /**
  * Editor — Main Orchestration
  *
- * Parses URL params, initializes the Photopea bridge, loads images
- * via postMessage, runs the acreage script, and wires up Save/Fulfill buttons.
+ * Parses URL params, initializes the Photopea bridge with image URLs in
+ * the config hash (Photopea loads them natively), runs the acreage script,
+ * and wires up Save/Fulfill buttons.
  */
 
 import { CONFIG, imageUrl, buildServerHash, acreageScript, packLabel, directionLabel } from './config.js';
@@ -119,7 +120,9 @@ sidebarToggle.addEventListener('click', () => {
 
 async function init() {
   try {
-    // Build iframe src with server config for save-to-webhook
+    // Build iframe src with server config only.
+    // Files are loaded after init via app.open() — each call gets exactly
+    // one "done" response, fully aligned with the Live Messaging docs.
     const serverHash = buildServerHash(state.customerId, state.orderId);
     iframe.src = CONFIG.PHOTOPEA_URL + serverHash;
 
@@ -131,7 +134,10 @@ async function init() {
 
     setStatus('loading', 'Loading images…');
 
-    // Load images sequentially via postMessage
+    // Load images sequentially via app.open(url).
+    // Photopea fetches each image from its iframe origin (CORS allows
+    // www.photopea.com on the R2 bucket). Each runScript call is
+    // serialized through the bridge's queue with exactly one "done".
     let loadedCount = 0;
     for (let i = 0; i < imageUrls.length; i++) {
       const dir = directions[i];
@@ -142,12 +148,7 @@ async function init() {
       updateProgress(i, imageUrls.length);
 
       try {
-        const buffer = await fetch(url).then(r => {
-          if (!r.ok) throw new Error(`HTTP ${r.status}`);
-          return r.arrayBuffer();
-        });
-
-        await bridge.loadFile(buffer);
+        await bridge.runScript(`app.open("${url}");`);
         updateImageStatus(dir, 'loaded', '✓');
         loadedCount++;
       } catch (err) {
@@ -157,9 +158,9 @@ async function init() {
       }
     }
 
-    updateProgress(imageUrls.length, imageUrls.length);
+    updateProgress(loadedCount, imageUrls.length);
 
-    // Run acreage script if acreage is provided
+    // Run acreage script if acreage is provided and at least one image loaded
     if (state.acreage && loadedCount > 0) {
       setLoading('Adding acreage text…', `${state.acreage} ACRES`);
       try {
@@ -167,6 +168,18 @@ async function init() {
       } catch (err) {
         console.error('[Editor] Acreage script failed:', err);
       }
+    }
+
+    // Handle zero-image case — show error state instead of "Ready"
+    if (loadedCount === 0) {
+      setStatus('error', 'No images');
+      setLoading(
+        '⚠️ No images found',
+        'None of the expected images exist in storage yet. The images may not have been uploaded for this order.'
+      );
+      // Don't hide the loading overlay — keep the error message visible
+      // Don't enable save/fulfill buttons — nothing to save
+      return;
     }
 
     // Ready!
@@ -271,8 +284,10 @@ function updateProgress(current, total) {
   if (current >= total) {
     progressFill.classList.add('progress-bar__fill--complete');
     progressText.textContent = `All ${total} images loaded`;
+  } else if (current > 0) {
+    progressText.textContent = `${current} of ${total} images loaded`;
   } else {
-    progressText.textContent = `Loading ${current + 1} of ${total}…`;
+    progressText.textContent = `0 of ${total} images loaded`;
   }
 }
 
