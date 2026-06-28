@@ -17,9 +17,9 @@ export const CONFIG = Object.freeze({
   // Maps product pack names to their constituent image directions.
   // Image filename convention: property_{direction}.png
   PACK_MAP: Object.freeze({
-    overhead_only: ['overhead'],
-    overhead_north: ['overhead', 'north'],
-    full: ['overhead', 'north', 'east', 'south', 'west'],
+    overhead_only: ['overhead', 'map'],
+    overhead_north: ['overhead', 'north', 'map'],
+    full: ['overhead', 'north', 'east', 'south', 'west', 'map'],
   }),
 });
 
