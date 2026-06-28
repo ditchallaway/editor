@@ -246,8 +246,17 @@ async function init() {
         });
 
         if (!response.ok) {
+          let errMsg = `Server returned ${response.status}`;
           const errText = await response.text();
-          throw new Error(errText || `Server returned ${response.status}`);
+          if (errText) {
+            try {
+              const errJson = JSON.parse(errText);
+              errMsg = errJson.message || errJson.error || errText;
+            } catch (e) {
+              errMsg = errText;
+            }
+          }
+          throw new Error(errMsg);
         }
 
         fulfillBtn.innerHTML = checkIcon() + 'Fulfilled!';
